@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DSA Universe – Interactive Playground</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════ RESET & VARIABLES ═══════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --bg:#080b14;--bg2:#0d1120;--bg3:#111827;
+  --card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.09);
+  --text:#e8eaf6;--text2:#94a3b8;--text3:#64748b;
+  --blue:#3b82f6;--blue-g:rgba(59,130,246,0.25);
+  --purple:#8b5cf6;--purple-g:rgba(139,92,246,0.25);
+  --green:#10b981;--green-g:rgba(16,185,129,0.25);
+  --orange:#f97316;--orange-g:rgba(249,115,22,0.25);
+  --red:#ef4444;--red-g:rgba(239,68,68,0.25);
+  --yellow:#f59e0b;--teal:#14b8a6;--teal-g:rgba(20,184,166,0.25);
+  --pink:#ec4899;--pink-g:rgba(236,72,153,0.25);
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --radius:16px;--shadow:0 8px 32px rgba(0,0,0,0.5);--tr:0.3s ease;
+}
+[data-theme="light"]{
+  --bg:#f0f4ff;--bg2:#ffffff;--bg3:#f8faff;
+  --card:rgba(255,255,255,0.8);--card-border:rgba(0,0,0,0.09);
+  --text:#1e293b;--text2:#475569;--text3:#94a3b8;--shadow:0 8px 32px rgba(0,0,0,0.1);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--tr),color var(--tr)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:3px}
+
+/* ═══════════════ PAGES ═══════════════ */
+.page{display:none;min-height:100vh;animation:fadeIn .4s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ═══════════════ NAVBAR ═══════════════ */
+#navbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(8,11,20,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--card-border)}
+[data-theme="light"] #navbar{background:rgba(240,244,255,0.85)}
+.nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:62px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:800;font-size:1.1rem;cursor:pointer}
+.logo-hex{font-size:1.5rem;color:var(--blue)}
+.nav-breadcrumb{display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--text3)}
+.nav-breadcrumb .crumb{color:var(--text2);cursor:pointer;transition:color var(--tr)}
+.nav-breadcrumb .crumb:hover{color:var(--blue)}
+.nav-breadcrumb .sep{color:var(--text3)}
+.nav-breadcrumb .current{color:var(--blue);font-weight:600}
+.nav-actions{display:flex;gap:8px}
+.nav-btn{background:var(--card);border:1px solid var(--card-border);color:var(--text);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:0.95rem;transition:all var(--tr)}
+.nav-btn:hover{background:var(--blue);border-color:var(--blue)}
+
+/* ═══════════════ TOAST ═══════════════ */
+#toasts{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column-reverse;gap:8px;z-index:9999}
+.toast{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--card-border);padding:11px 18px;border-radius:10px;font-size:0.875rem;font-weight:500;box-shadow:var(--shadow);animation:toastIn .35s cubic-bezier(.34,1.56,.64,1);min-width:200px;backdrop-filter:blur(12px)}
+.toast.success{border-color:rgba(16,185,129,.4)}.toast.error{border-color:rgba(239,68,68,.4)}.toast.info{border-color:rgba(59,130,246,.4)}
+.toast.out{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(40px)}}
+
+/* ═══════════════ HOME PAGE ═══════════════ */
+#page-home{padding-top:62px}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px 40px;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse 80% 55% at 50% 0%,rgba(59,130,246,0.14) 0%,transparent 65%),
+             radial-gradient(ellipse 55% 45% at 80% 80%,rgba(139,92,246,0.1) 0%,transparent 55%),var(--bg)}
+#pcanvas{position:absolute;inset:0;pointer-events:none}
+.hero-content{max-width:780px;text-align:center;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--blue);padding:6px 18px;border-radius:100px;font-size:0.82rem;font-weight:600;margin-bottom:24px;animation:fadeIn .5s ease}
+.hero-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;line-height:1.1;letter-spacing:-0.03em;margin-bottom:18px;animation:fadeIn .6s .1s ease both}
+.grad{background:linear-gradient(135deg,var(--blue) 0%,var(--purple) 55%,var(--pink) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:var(--text2);font-size:1.05rem;line-height:1.7;max-width:560px;margin:0 auto 36px;animation:fadeIn .6s .2s ease both}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:50px;animation:fadeIn .6s .3s ease both}
+.btn-primary{background:var(--blue);color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all var(--tr);box-shadow:0 0 24px var(--blue-g)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 40px var(--blue-g)}
+.btn-ghost{background:var(--card);color:var(--text);border:1px solid var(--card-border);padding:13px 28px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;transition:all var(--tr);backdrop-filter:blur(8px)}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.08)}
+.hero-stats{display:flex;gap:44px;justify-content:center;animation:fadeIn .6s .4s ease both}
+.stat{display:flex;flex-direction:column;align-items:center}.stat-n{font-size:2rem;font-weight:900;color:var(--blue)}.stat-l{font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+
+/* ── Section headings ── */
+.sec{max-width:1200px;margin:0 auto;padding:70px 24px 50px}
+.sec-head{text-align:center;margin-bottom:48px}
+.eyebrow{display:inline-block;font-size:0.75rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.15em;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);padding:4px 14px;border-radius:100px;margin-bottom:14px}
+.sec-head h2{font-size:clamp(1.7rem,3.5vw,2.5rem);font-weight:800;margin-bottom:10px}
+.sec-head p{color:var(--text2);font-size:1rem}
+
+/* ── DS Category Cards (Linear / Non-Linear / Definitions / Algos) ── */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:60px}
+.cat-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:28px;cursor:pointer;transition:all var(--tr);backdrop-filter:blur(10px);position:relative;overflow:hidden}
+.cat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,0.06),transparent);opacity:0;transition:opacity var(--tr)}
+.cat-card:hover::before{opacity:1}
+.cat-card:hover{transform:translateY(-5px);border-color:rgba(59,130,246,0.35);box-shadow:0 20px 60px rgba(0,0,0,0.35)}
+
+.cat-icon{font-size:2.5rem;margin-bottom:14px}
+.cat-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.cat-card p{font-size:0.85rem;color:var(--text2);line-height:1.6}
+.cat-arrow{position:absolute;top:22px;right:22px;color:var(--text3);font-size:1.2rem;transition:transform var(--tr)}
+.cat-card:hover .cat-arrow{transform:translateX(4px)}
+.cs-badge{display:inline-block;background:rgba(245,158,11,0.15);color:var(--yellow);border:1px solid rgba(245,158,11,0.3);padding:2px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;margin-top:10px}
+
+/* ── DS Item Cards inside Linear/NonLinear pages ── */
+.ds-item-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.ds-item-card{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:24px;cursor:pointer;transition:all var(--tr);backdrop-filter:blur(8px)}
+.ds-item-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.ds-item-card .di-icon{font-size:2rem;margin-bottom:12px}
+.ds-item-card h4{font-size:1rem;font-weight:700;margin-bottom:6px}
+.ds-item-card p{font-size:0.82rem;color:var(--text2);line-height:1.5}
+.ds-item-card .di-ops{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px}
+.di-op-tag{font-size:0.7rem;padding:2px 8px;border-radius:100px;font-weight:600}
+
+/* Color themes per DS */
+.theme-blue  .di-op-tag{background:rgba(59,130,246,0.15);color:var(--blue)}
+.theme-blue .ds-item-card:hover{border-color:rgba(59,130,246,0.4)}
+.theme-purple.di-op-tag,.theme-purple .di-op-tag{background:rgba(139,92,246,0.15);color:var(--purple)}
+.theme-purple .ds-item-card:hover{border-color:rgba(139,92,246,0.4)}
+.theme-green .di-op-tag{background:rgba(16,185,129,0.15);color:var(--green)}
+.theme-green .ds-item-card:hover{border-color:rgba(16,185,129,0.4)}
+.theme-orange .di-op-tag{background:rgba(249,115,22,0.15);color:var(--orange)}
+.theme-orange .ds-item-card:hover{border-color:rgba(249,115,22,0.4)}
+.theme-teal .di-op-tag{background:rgba(20,184,166,0.15);color:var(--teal)}
+.theme-teal .ds-item-card:hover{border-color:rgba(20,184,166,0.4)}
+.theme-pink .di-op-tag{background:rgba(236,72,153,0.15);color:var(--pink)}
+.theme-pink .ds-item-card:hover{border-color:rgba(236,72,153,0.4)}
+
+/* ═══════════════ DS DETAIL PAGE ═══════════════ */
+#page-ds{padding-top:72px}
+.ds-detail{max-width:1200px;margin:0 auto;padding:32px 24px 60px}
+.ds-header{display:flex;align-items:center;gap:16px;margin-bottom:36px}
+.ds-big-icon{font-size:3rem}
+.ds-header-text h1{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900}
+.ds-header-text p{color:var(--text2);font-size:0.95rem;margin-top:4px}
+.ds-tag{display:inline-block;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:4px 12px;border-radius:100px;margin-bottom:8px}
+
+/* ── Info Cards Row ── */
+.info-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:28px}
+.info-box{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:20px;backdrop-filter:blur(8px)}
+.info-box h4{font-size:0.85rem;font-weight:700;margin-bottom:12px}
+.info-box ul{padding-left:16px;display:flex;flex-direction:column;gap:5px}
+.info-box li{font-size:0.82rem;color:var(--text2);line-height:1.5}
+.info-box p{font-size:0.84rem;color:var(--text2);line-height:1.6}
+
+/* ── Complexity Table ── */
+.complexity-wrap{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:20px;margin-bottom:28px;backdrop-filter:blur(8px)}
+.complexity-wrap h4{font-size:0.85rem;font-weight:700;margin-bottom:14px;color:var(--text2)}
+.cx-table{width:100%;border-collapse:collapse;font-size:0.82rem}
+.cx-table th{padding:7px 12px;text-align:left;color:var(--text3);font-size:0.72rem;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--card-border)}
+.cx-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2)}
+.cx-table td.g{color:var(--green);font-weight:700;font-family:var(--mono)}
+.cx-table td.y{color:var(--yellow);font-weight:700;font-family:var(--mono)}
+.cx-table td.r{color:var(--red);font-weight:700;font-family:var(--mono)}
+
+/* ── Visualizer Panel ── */
+.viz-panel{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;backdrop-filter:blur(8px)}
+.viz-panel-title{font-size:1.1rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.speed-row{display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text3)}
+.speed-row input[type=range]{width:80px;accent-color:var(--blue);cursor:pointer}
+.inp-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.vi{flex:1;min-width:80px;max-width:150px;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:0.9rem;font-family:var(--mono);outline:none;transition:border-color var(--tr)}
+.vi:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-g)}
+.vi.sm{max-width:90px}
+.info-badge{background:rgba(255,255,255,0.05);border:1px solid var(--card-border);padding:8px 14px;border-radius:8px;font-size:0.8rem;font-family:var(--mono);color:var(--text2)}
+.btn-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.vb{padding:8px 16px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all var(--tr);font-family:var(--font)}
+.vb:hover{transform:translateY(-1px);filter:brightness(1.2)}.vb:active{transform:none}
+.vb.blue   {background:rgba(59,130,246,0.15); color:var(--blue);  border-color:rgba(59,130,246,0.25)}
+.vb.purple {background:rgba(139,92,246,0.15); color:var(--purple);border-color:rgba(139,92,246,0.25)}
+.vb.green  {background:rgba(16,185,129,0.15); color:var(--green); border-color:rgba(16,185,129,0.25)}
+.vb.red    {background:rgba(239,68,68,0.15);  color:var(--red);   border-color:rgba(239,68,68,0.25)}
+.vb.yellow {background:rgba(245,158,11,0.15); color:var(--yellow);border-color:rgba(245,158,11,0.25)}
+.vb.orange {background:rgba(249,115,22,0.15); color:var(--orange);border-color:rgba(249,115,22,0.25)}
+.vb.teal   {background:rgba(20,184,166,0.15); color:var(--teal);  border-color:rgba(20,184,166,0.25)}
+.vb.pink   {background:rgba(236,72,153,0.15); color:var(--pink);  border-color:rgba(236,72,153,0.25)}
+.vb.gray   {background:rgba(255,255,255,0.05);color:var(--text2); border-color:var(--card-border)}
+
+/* ── Display areas ── */
+.viz-area{min-height:90px;background:rgba(0,0,0,0.2);border:1px solid var(--card-border);border-radius:10px;padding:14px;margin-bottom:12px;overflow-x:auto}
+.empty-hint{color:var(--text3);font-size:0.82rem;font-family:var(--mono)}
+
+/* Array cells */
+.arr-wrap{display:flex;flex-wrap:wrap;gap:7px;align-items:flex-end}
+.ac{display:flex;flex-direction:column;align-items:center;transition:all .35s cubic-bezier(.34,1.56,.64,1)}
+.av{width:54px;height:54px;display:flex;align-items:center;justify-content:center;background:rgba(59,130,246,0.15);border:2px solid rgba(59,130,246,0.4);border-radius:9px;font-family:var(--mono);font-size:.95rem;font-weight:700;transition:all .3s ease}
+.ai{font-size:.62rem;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+.ac.hl .av{background:rgba(16,185,129,0.3);border-color:var(--green);color:var(--green);box-shadow:0 0 14px var(--green-g)}
+.ac.found .av{background:rgba(245,158,11,0.3);border-color:var(--yellow);color:var(--yellow);box-shadow:0 0 14px rgba(245,158,11,.4)}
+.ac.new .av{background:rgba(139,92,246,0.3);border-color:var(--purple);color:var(--purple);box-shadow:0 0 14px var(--purple-g);animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+.ac.del .av{background:rgba(239,68,68,0.3);border-color:var(--red);color:var(--red);animation:shrink .35s ease forwards}
+
+/* Stack */
+.stack-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.sc{width:100%;max-width:300px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(139,92,246,0.15);border:2px solid rgba(139,92,246,0.3);border-radius:9px;font-family:var(--mono);font-size:.95rem;font-weight:700;position:relative;transition:all .3s ease}
+.sc.top{background:rgba(139,92,246,0.35);border-color:var(--purple);box-shadow:0 0 18px var(--purple-g)}
+.sc.top::after{content:'← TOP';position:absolute;right:12px;font-size:.68rem;color:var(--purple);font-weight:700}
+.sc.push-anim{animation:slideD .4s cubic-bezier(.34,1.56,.64,1)}
+.sc.pop-anim{animation:slideU .3s ease forwards}
+.stack-base{width:100%;max-width:300px;text-align:center;padding-top:8px;border-top:2px solid var(--card-border);font-size:.72rem;color:var(--text3);font-family:var(--mono);margin-top:4px}
+.stack-top-label{font-size:.72rem;color:var(--text3);font-family:var(--mono);align-self:flex-start;margin-bottom:4px}
+
+/* Queue */
+.queue-wrap{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:4px 0}
+.ql{writing-mode:vertical-rl;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono)}
+.ql.f{color:var(--green)}.ql.r{color:var(--orange);transform:rotate(180deg)}
+.qc{flex-shrink:0;min-width:54px;height:54px;display:flex;align-items:center;justify-content:center;background:rgba(16,185,129,0.15);border:2px solid rgba(16,185,129,0.35);border-radius:9px;font-family:var(--mono);font-size:.9rem;font-weight:700;transition:all .3s ease}
+.qc.front{background:rgba(16,185,129,0.3);border-color:var(--green);box-shadow:0 0 14px var(--green-g)}
+.qc.rear{background:rgba(249,115,22,0.3);border-color:var(--orange);box-shadow:0 0 14px var(--orange-g)}
+.qc.eq{animation:slideR .4s cubic-bezier(.34,1.56,.64,1)}
+.qc.dq{animation:slideL .3s ease forwards}
+.q-arr{color:var(--text3);font-size:1.1rem;flex-shrink:0}
+
+/* Linked List */
+.ll-wrap{display:flex;align-items:center;flex-wrap:wrap;gap:4px;overflow-x:auto;padding:4px 0}
+.ll-node{display:flex;align-items:center;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);flex-shrink:0}
+.ll-box{display:flex;height:50px;border:2px solid rgba(249,115,22,0.4);border-radius:9px;overflow:hidden}
+.ll-d{width:50px;display:flex;align-items:center;justify-content:center;background:rgba(249,115,22,0.15);font-family:var(--mono);font-size:.9rem;font-weight:700;border-right:1px solid rgba(249,115,22,0.3)}
+.ll-n{width:28px;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--text3);background:rgba(249,115,22,0.07)}
+.ll-arr{color:var(--orange);font-size:1.2rem;margin:0 4px;opacity:.7}
+.ll-null{background:rgba(100,116,139,0.12);border:2px dashed rgba(100,116,139,0.3);border-radius:8px;padding:0 12px;font-family:var(--mono);font-size:.78rem;color:var(--text3);display:flex;align-items:center;height:50px;flex-shrink:0}
+.ll-node.hl .ll-d{background:rgba(16,185,129,0.3);color:var(--green)}
+
+/* BST */
+.tree-wrap{background:rgba(0,0,0,0.2);border:1px solid var(--card-border);border-radius:10px;overflow:hidden;min-height:320px}
+#tree-svg{display:block;width:100%;height:340px}
+.tree-node circle{fill:rgba(20,184,166,0.18);stroke:var(--teal);stroke-width:2;transition:all .3s ease}
+.tree-node.hl circle{fill:rgba(245,158,11,0.35);stroke:var(--yellow)}
+.tree-node.found circle{fill:rgba(16,185,129,0.4);stroke:var(--green)}
+.tree-node text{fill:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.tree-edge{stroke:rgba(255,255,255,0.13);stroke-width:2;fill:none}
+
+/* Graph */
+.graph-wrap{background:rgba(0,0,0,0.2);border:1px solid var(--card-border);border-radius:10px;overflow:hidden;min-height:300px}
+#graph-svg{display:block;width:100%;height:320px}
+.gv circle{fill:rgba(236,72,153,0.18);stroke:var(--pink);stroke-width:2;cursor:grab;transition:fill .2s,stroke .2s}
+.gv circle:active{cursor:grabbing}
+.gv.visited circle{fill:rgba(16,185,129,0.35);stroke:var(--green)}
+.gv text{fill:var(--text);font-family:var(--mono);font-size:12px;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.g-edge{stroke:rgba(236,72,153,0.35);stroke-width:2}
+.g-edge.hl{stroke:var(--purple);stroke-width:3}
+
+/* ── Status & History ── */
+.status{background:rgba(0,0,0,0.25);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;font-size:.82rem;font-family:var(--mono);color:var(--text2);min-height:40px;margin-bottom:10px;transition:all .3s}
+.status.ok{border-color:rgba(16,185,129,.4);color:var(--green);background:rgba(16,185,129,.05)}
+.status.err{border-color:rgba(239,68,68,.4);color:var(--red);background:rgba(239,68,68,.05)}
+.status.nfo{border-color:rgba(59,130,246,.4);color:var(--blue);background:rgba(59,130,246,.05)}
+.hist{background:rgba(0,0,0,0.15);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;font-size:.77rem;max-height:100px;overflow-y:auto}
+.hist-title{font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-size:.68rem;margin-bottom:6px}
+.hitem{color:var(--text3);font-family:var(--mono);padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.hitem:last-child{border-bottom:none;color:var(--text2)}
+.hitem .hl{color:var(--blue)}
+
+/* ═══════════════ DEFINITIONS PAGE ═══════════════ */
+.def-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.def-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:26px;backdrop-filter:blur(10px);transition:all var(--tr);position:relative;overflow:hidden}
+.def-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+.def-card.ab::after{background:var(--blue)}.def-card.ap::after{background:var(--purple)}.def-card.ag::after{background:var(--green)}.def-card.ao::after{background:var(--orange)}
+.def-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.def-icon{font-size:2rem;margin-bottom:14px}
+.def-card h3{font-size:1rem;font-weight:700;margin-bottom:10px}
+.def-card p,.def-card li{font-size:.85rem;color:var(--text2);line-height:1.7}
+.def-card ul{padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.type-root{font-weight:700;color:var(--blue);margin-bottom:8px;font-size:.9rem}
+.type-list{display:flex;flex-direction:column;gap:6px;padding-left:12px;border-left:2px solid var(--card-border)}
+.tl-item{padding:5px 9px;border-radius:6px;font-size:.8rem}
+.tl-item.b{background:rgba(59,130,246,0.1);color:var(--blue)}.tl-item.p{background:rgba(139,92,246,0.1);color:var(--purple)}.tl-item.g{background:rgba(16,185,129,0.1);color:var(--green)}
+.cmp-table{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+.ct-h{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding-bottom:5px;border-bottom:1px solid var(--card-border)}
+.ct-r{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.79rem;color:var(--text2);padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+
+/* ═══════════════ FOOTER ═══════════════ */
+footer{border-top:1px solid var(--card-border);background:var(--bg2);padding:40px 24px;text-align:center}
+.ft-logo{display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.05rem;font-weight:800;margin-bottom:10px}
+footer p{color:var(--text3);font-size:.82rem;margin-bottom:6px}
+
+/* ═══════════════ ANIMATIONS ═══════════════ */
+@keyframes popIn{0%{opacity:0;transform:scale(.4)}70%{transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
+@keyframes shrink{to{opacity:0;transform:scale(0)}}
+@keyframes slideD{from{opacity:0;transform:translateY(-28px)}to{opacity:1;transform:none}}
+@keyframes slideU{to{opacity:0;transform:translateY(-28px)}}
+@keyframes slideR{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes slideL{to{opacity:0;transform:translateX(-28px)}}
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media(max-width:600px){
+  .nav-breadcrumb{display:none}
+  .hero-stats{gap:20px}.stat-n{font-size:1.5rem}
+  .sec{padding:60px 14px 40px}
+  .ds-detail{padding:20px 14px 50px}
+  .btn-row .vb{padding:7px 11px;font-size:.78rem}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toasts"></div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo" onclick="goHome()">
+      <span class="logo-hex">⬡</span>
+      <span>DSA Universe</span>
+    </div>
+    <div class="nav-breadcrumb" id="breadcrumb"></div>
+    <div class="nav-actions">
+      <button class="nav-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <button class="nav-btn" id="sound-btn" onclick="toggleSound()" title="Toggle sound">🔊</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════
+     PAGE: HOME
+════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <!-- HERO -->
+  <div class="hero">
+    <canvas id="pcanvas"></canvas>
+    <div class="hero-content">
+      <div class="hero-badge">🚀 Interactive DSA Learning Platform</div>
+      <h1 class="hero-title">Master Data Structures<br/><span class="grad">Through Interactive Visualization</span></h1>
+      <p class="hero-sub">Click any category below to explore data structures with real-time animations, step-by-step operations, and full visualizers.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="showPage('linear')">Explore Linear ↓</button>
+        <button class="btn-ghost" onclick="showPage('definitions')">Learn Concepts</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-n">6</span><span class="stat-l">Data Structures</span></div>
+        <div class="stat"><span class="stat-n">40+</span><span class="stat-l">Operations</span></div>
+        <div class="stat"><span class="stat-n">∞</span><span class="stat-l">Animations</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="sec">
+    <div class="sec-head">
+      <div class="eyebrow">Choose Your Topic</div>
+      <h2>What do you want to explore?</h2>
+      <p>Each section opens its own interactive experience</p>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-card" onclick="showPage('linear')">
+        <div class="cat-icon">📊</div>
+        <h3>Linear Data Structures</h3>
+        <p>Array, Stack, Queue, and Linked List — each with full info and interactive visualizers</p>
+        <span class="cat-arrow">→</span>
+      </div>
+      <div class="cat-card" onclick="showPage('nonlinear')">
+        <div class="cat-icon">🌲</div>
+        <h3>Non-Linear Data Structures</h3>
+        <p>Binary Search Tree and Graph with DFS, BFS, and traversal animations</p>
+        <span class="cat-arrow">→</span>
+      </div>
+      <div class="cat-card" onclick="showPage('definitions')">
+        <div class="cat-icon">📖</div>
+        <h3>Definitions</h3>
+        <p>What are data structures? Types, importance, and Linear vs Non-Linear comparison</p>
+        <span class="cat-arrow">→</span>
+      </div>
+
+    </div>
+  </div>
+  <footer>
+    <div class="ft-logo"><span class="logo-hex">⬡</span> DSA Universe</div>
+    <p>Making data structures visual, interactive, and intuitive.</p>
+    <p>© 2025 DSA Universe — Built with ❤️ Vanilla JS</p>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: LINEAR (list of 4 cards)
+════════════════════════════════════════ -->
+<div id="page-linear" class="page">
+  <div class="sec">
+    <div class="sec-head">
+      <div class="eyebrow">Linear</div>
+      <h2>Linear Data Structures</h2>
+      <p>Elements stored and accessed in a sequential order — click any structure to explore</p>
+    </div>
+    <div class="ds-item-grid">
+      <div class="ds-item-card theme-blue" onclick="showDS('array')">
+        <div class="di-icon">📦</div>
+        <h4>Array</h4>
+        <p>Fixed-size collection at contiguous memory. O(1) access by index.</p>
+        <div class="di-ops">
+          <span class="di-op-tag">Traverse</span><span class="di-op-tag">Search</span><span class="di-op-tag">Update</span><span class="di-op-tag">Insert</span><span class="di-op-tag">Delete</span>
+        </div>
+      </div>
+      <div class="ds-item-card theme-purple" onclick="showDS('stack')">
+        <div class="di-icon">📚</div>
+        <h4>Stack</h4>
+        <p>Last-In-First-Out (LIFO). Push and pop only from the top.</p>
+        <div class="di-ops">
+          <span class="di-op-tag">Push</span><span class="di-op-tag">Pop</span><span class="di-op-tag">Peek</span><span class="di-op-tag">IsEmpty</span><span class="di-op-tag">IsFull</span>
+        </div>
+      </div>
+      <div class="ds-item-card theme-green" onclick="showDS('queue')">
+        <div class="di-icon">🚶</div>
+        <h4>Queue</h4>
+        <p>First-In-First-Out (FIFO). Enqueue at rear, dequeue from front.</p>
+        <div class="di-ops">
+          <span class="di-op-tag">Enqueue</span><span class="di-op-tag">Dequeue</span><span class="di-op-tag">Front</span><span class="di-op-tag">Rear</span><span class="di-op-tag">IsEmpty</span>
+        </div>
+      </div>
+      <div class="ds-item-card theme-orange" onclick="showDS('ll')">
+        <div class="di-icon">🔗</div>
+        <h4>Linked List</h4>
+        <p>Dynamic nodes connected by pointers. Efficient insert/delete at head.</p>
+        <div class="di-ops">
+          <span class="di-op-tag">Insert Head</span><span class="di-op-tag">Insert Tail</span><span class="di-op-tag">Delete</span><span class="di-op-tag">Search</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: NON-LINEAR
+════════════════════════════════════════ -->
+<div id="page-nonlinear" class="page">
+  <div class="sec">
+    <div class="sec-head">
+      <div class="eyebrow">Non-Linear</div>
+      <h2>Non-Linear Data Structures</h2>
+      <p>Hierarchical and networked relationships — click to explore</p>
+    </div>
+    <div class="ds-item-grid">
+      <div class="ds-item-card theme-teal" onclick="showDS('tree')">
+        <div class="di-icon">🌲</div>
+        <h4>Binary Search Tree</h4>
+        <p>Hierarchical: left &lt; root &lt; right. O(log n) search on balanced tree.</p>
+        <div class="di-ops">
+          <span class="di-op-tag">Insert</span><span class="di-op-tag">Delete</span><span class="di-op-tag">Search</span><span class="di-op-tag">Inorder</span><span class="di-op-tag">BFS</span>
+        </div>
+      </div>
+      <div class="ds-item-card theme-pink" onclick="showDS('graph')">
+        <div class="di-icon">🕸️</div>
+        <h4>Graph</h4>
+        <p>Vertices and edges. Models real-world networks, maps, and relationships.</p>
+        <div class="di-ops">
+          <span class="di-op-tag">Add Vertex</span><span class="di-op-tag">Add Edge</span><span class="di-op-tag">DFS</span><span class="di-op-tag">BFS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: DEFINITIONS
+════════════════════════════════════════ -->
+<div id="page-definitions" class="page">
+  <div class="sec">
+    <div class="sec-head">
+      <div class="eyebrow">Foundations</div>
+      <h2>Understanding Data Structures</h2>
+      <p>The core concepts every programmer must know</p>
+    </div>
+    <div class="def-grid">
+      <div class="def-card ab">
+        <div class="def-icon">🧱</div>
+        <h3>What is a Data Structure?</h3>
+        <p>A data structure is a specialized format for organizing, processing, retrieving, and storing data. It defines the relationship between values and the operations that can be applied, enabling efficient access and modification of data.</p>
+      </div>
+      <div class="def-card ap">
+        <div class="def-icon">💡</div>
+        <h3>Why Are They Important?</h3>
+        <ul>
+          <li>Enable faster algorithms and better performance</li>
+          <li>Reduce memory usage and optimize storage</li>
+          <li>Model real-world relationships between data</li>
+          <li>Foundation for databases, OS, and networks</li>
+          <li>Essential for scalable software engineering</li>
+        </ul>
+      </div>
+      <div class="def-card ag">
+        <div class="def-icon">🗂️</div>
+        <h3>Types of Data Structures</h3>
+        <div class="type-root">Data Structures</div>
+        <div class="type-list">
+          <div class="tl-item b">Primitive: int, float, char, bool</div>
+          <div class="tl-item p">Linear: Array, Stack, Queue, Linked List</div>
+          <div class="tl-item g">Non-Linear: Tree, Graph, Heap, Trie</div>
+        </div>
+      </div>
+      <div class="def-card ao">
+        <div class="def-icon">⚖️</div>
+        <h3>Linear vs Non-Linear</h3>
+        <div class="cmp-table">
+          <div class="ct-h"><span>Linear</span><span>Non-Linear</span></div>
+          <div class="ct-r"><span>Sequential order</span><span>Hierarchical / network</span></div>
+          <div class="ct-r"><span>Single level</span><span>Multiple levels</span></div>
+          <div class="ct-r"><span>Easy traversal</span><span>Complex traversal</span></div>
+          <div class="ct-r"><span>Array, Stack, Queue</span><span>Tree, Graph</span></div>
+          <div class="ct-r"><span>Less memory efficient</span><span>More memory efficient</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: DS DETAIL (dynamic content injected)
+════════════════════════════════════════ -->
+<div id="page-ds" class="page">
+  <div class="ds-detail" id="ds-content"></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════
+   SOUND ENGINE
+════════════════════════════════════════ */
+let SND = true;
+let actx;
+function getACtx(){ if(!actx) actx=new(window.AudioContext||window.webkitAudioContext)(); return actx; }
+function tone(f=440,t='sine',d=0.09,v=0.1){
+  if(!SND) return;
+  try{
+    const c=getACtx(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type=t;o.frequency.value=f;
+    g.gain.setValueAtTime(v,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);
+    o.start();o.stop(c.currentTime+d);
+  }catch(e){}
+}
+const SFX={ok:()=>tone(520,'sine',.1),del:()=>tone(260,'triangle',.12),found:()=>tone(660,'sine',.15),err:()=>tone(180,'sawtooth',.1),info:()=>tone(440,'sine',.08),clr:()=>tone(300,'square',.1)};
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+function toast(msg,type='info'){
+  const ico={success:'✅',error:'❌',info:'ℹ️'};
+  const tc=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span>${ico[type]||'ℹ️'}</span><span>${msg}</span>`;
+  tc.appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),350);},2700);
+}
+
+/* ════════════════════════════════════════
+   THEME & SOUND TOGGLES
+════════════════════════════════════════ */
+function toggleTheme(){
+  const h=document.documentElement;
+  const dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('theme-btn').textContent=dark?'☀️':'🌙';
+  SFX.info();
+}
+function toggleSound(){
+  SND=!SND;
+  document.getElementById('sound-btn').textContent=SND?'🔊':'🔇';
+  toast(SND?'Sound on':'Sound off','info');
+}
+
+/* ════════════════════════════════════════
+   PAGE NAVIGATION
+════════════════════════════════════════ */
+const PAGE_TITLES={
+  home:'Home',linear:'Linear DS',nonlinear:'Non-Linear DS',
+  definitions:'Definitions',ds:'Data Structure'
+};
+let currentPage='home';
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+name);
+  if(pg){ pg.classList.add('active'); window.scrollTo(0,0); }
+  currentPage=name;
+  updateBreadcrumb(name);
+  SFX.info();
+}
+
+function goHome(){ showPage('home'); }
+
+function updateBreadcrumb(page){
+  const bc=document.getElementById('breadcrumb');
+  if(page==='home'){bc.innerHTML='';return;}
+  let html=`<span class="crumb" onclick="goHome()">Home</span>`;
+  if(page==='linear')    html+=`<span class="sep">/</span><span class="current">Linear DS</span>`;
+  else if(page==='nonlinear') html+=`<span class="sep">/</span><span class="current">Non-Linear DS</span>`;
+  else if(page==='definitions') html+=`<span class="sep">/</span><span class="current">Definitions</span>`;
+  else if(page==='ds'){
+    const cat=currentDSCat;
+    const catLabel=cat==='linear'?'Linear DS':'Non-Linear DS';
+    html+=`<span class="sep">/</span><span class="crumb" onclick="showPage('${cat}')">${catLabel}</span>`;
+    html+=`<span class="sep">/</span><span class="current">${currentDSName}</span>`;
+  }
+  bc.innerHTML=html;
+}
+
+/* ════════════════════════════════════════
+   DS DETAIL PAGE BUILDER
+════════════════════════════════════════ */
+let currentDSCat='linear';
+let currentDSName='';
+
+function showDS(ds){
+  currentDSCat=['array','stack','queue','ll'].includes(ds)?'linear':'nonlinear';
+  const info=DS_INFO[ds];
+  currentDSName=info.name;
+  document.getElementById('ds-content').innerHTML=buildDSPage(ds,info);
+  showPage('ds');
+  updateBreadcrumb('ds');
+  // init visualizer
+  setTimeout(()=>{ DS_INIT[ds]&&DS_INIT[ds](); },50);
+}
+
+/* ─── DS metadata ─── */
+const DS_INFO={
+  array:{
+    name:'Array', icon:'📦', color:'blue',
+    tag:'Linear · Fixed Size',
+    desc:'An array is a fixed-size, ordered collection of elements stored in contiguous memory locations. Each element is accessed in O(1) time using its index. In most languages, the array size is declared at creation and cannot change.',
+    advantages:['O(1) random access by index','Cache-friendly due to contiguous memory','Simple, predictable structure','Ideal for mathematical operations'],
+    disadvantages:['Fixed size — cannot grow or shrink','O(n) insertion and deletion (shifting required)','Wasted memory if array is not fully used','No built-in bounds checking in many languages'],
+    applications:['Image pixel buffers','Lookup tables and hash table buckets','Storing matrix data','Database record arrays'],
+    complexity:[
+      ['Access by Index','O(1)','O(1)','g','g'],
+      ['Linear Search','O(n)','O(n)','y','y'],
+      ['Insert at End','O(1)*','O(n)','g','y'],
+      ['Insert at Index','O(n)','O(n)','y','y'],
+      ['Delete by Index','O(n)','O(n)','y','y'],
+      ['Traverse All','O(n)','O(n)','y','y'],
+    ],
+    vizId:'array'
+  },
+  stack:{
+    name:'Stack', icon:'📚', color:'purple',
+    tag:'Linear · LIFO',
+    desc:'A Stack is a Last-In-First-Out (LIFO) data structure where elements can only be inserted or removed from the top. Think of a stack of plates — you can only add or remove from the top. It is implemented using an array or linked list.',
+    advantages:['O(1) push and pop operations','Simple and elegant structure','Supports backtracking and recursion','Used in expression parsing and undo operations'],
+    disadvantages:['Only top element is accessible','No random access to other elements','Stack overflow risk on limited memory','Cannot be searched without popping elements'],
+    applications:['Function call stack (recursion)','Undo/Redo in editors','Browser back/forward history','Expression evaluation and parenthesis matching'],
+    complexity:[
+      ['Push','O(1)','O(1)','g','g'],
+      ['Pop','O(1)','O(1)','g','g'],
+      ['Peek / Top','O(1)','O(1)','g','g'],
+      ['Search','O(n)','O(n)','y','y'],
+      ['Is Empty','O(1)','O(1)','g','g'],
+      ['Size','O(1)','O(1)','g','g'],
+    ],
+    vizId:'stack'
+  },
+  queue:{
+    name:'Queue', icon:'🚶', color:'green',
+    tag:'Linear · FIFO',
+    desc:'A Queue is a First-In-First-Out (FIFO) data structure. Elements are added at the rear (Enqueue) and removed from the front (Dequeue). Like a real-world queue or line — whoever comes first is served first.',
+    advantages:['O(1) enqueue and dequeue','Fair ordering — first come, first served','Natural for scheduling and buffering','Easy to implement with array or linked list'],
+    disadvantages:['No random access','Wasted space in simple array-based queue','Front pointer management needed','Cannot access middle elements directly'],
+    applications:['OS process / CPU scheduling','Printer spooler queue','Network packet buffering','BFS traversal in graphs'],
+    complexity:[
+      ['Enqueue','O(1)','O(1)','g','g'],
+      ['Dequeue','O(1)','O(1)','g','g'],
+      ['Front / Rear','O(1)','O(1)','g','g'],
+      ['Search','O(n)','O(n)','y','y'],
+      ['Is Empty','O(1)','O(1)','g','g'],
+      ['Size','O(1)','O(1)','g','g'],
+    ],
+    vizId:'queue'
+  },
+  ll:{
+    name:'Linked List', icon:'🔗', color:'orange',
+    tag:'Linear · Dynamic',
+    desc:'A Linked List is a dynamic data structure where each element (node) contains a data value and a pointer (next) to the next node. Unlike arrays, nodes are not stored contiguously in memory. Size grows and shrinks dynamically.',
+    advantages:['Dynamic size — grows/shrinks at runtime','O(1) insert or delete at head','No memory wastage (allocate as needed)','Efficient insertions/deletions in the middle'],
+    disadvantages:['O(n) random access — must traverse from head','Extra memory per node for the pointer','No cache locality (scattered memory)','Reverse traversal not possible in singly linked list'],
+    applications:['Browser history (back/forward)','Music and video playlists','Memory allocator free-list','Implementing stacks and queues dynamically'],
+    complexity:[
+      ['Access by Index','O(n)','O(n)','y','y'],
+      ['Search','O(n)','O(n)','y','y'],
+      ['Insert at Head','O(1)','O(1)','g','g'],
+      ['Insert at Tail','O(n)','O(n)','y','y'],
+      ['Insert at Position','O(n)','O(n)','y','y'],
+      ['Delete Head','O(1)','O(1)','g','g'],
+    ],
+    vizId:'ll'
+  },
+  tree:{
+    name:'Binary Search Tree', icon:'🌲', color:'teal',
+    tag:'Non-Linear · Hierarchical',
+    desc:'A Binary Search Tree (BST) is a node-based binary tree where every node\'s left subtree contains only values less than the node, and the right subtree contains only values greater. This property enables efficient searching, insertion, and deletion.',
+    advantages:['O(log n) search, insert, delete on balanced tree','Maintains sorted order automatically','In-order traversal gives sorted sequence','Efficient range queries'],
+    disadvantages:['O(n) worst case if tree is skewed (unbalanced)','No O(1) access — must traverse','Complex deletion (3 cases)','Needs balancing (AVL/Red-Black) for guarantees'],
+    applications:['Database indexing (B-trees)','File system directory structure','Auto-complete / spell-checkers','Priority queues and schedulers'],
+    complexity:[
+      ['Search','O(log n)','O(n)','g','r'],
+      ['Insert','O(log n)','O(n)','g','r'],
+      ['Delete','O(log n)','O(n)','g','r'],
+      ['Min / Max','O(log n)','O(n)','g','r'],
+      ['Traversal','O(n)','O(n)','y','y'],
+      ['Height','O(n)','O(n)','y','y'],
+    ],
+    vizId:'tree'
+  },
+  graph:{
+    name:'Graph', icon:'🕸️', color:'pink',
+    tag:'Non-Linear · Network',
+    desc:'A Graph is a non-linear data structure consisting of Vertices (nodes) and Edges (connections). It can be directed (edges have direction) or undirected. Graphs model complex real-world relationships like social networks, maps, and the internet.',
+    advantages:['Models complex many-to-many relationships','Flexible — directed, undirected, weighted','Powerful traversal algorithms (DFS, BFS)','Shortest path algorithms (Dijkstra, A*)'],
+    disadvantages:['High memory usage for dense graphs','Complex algorithms for analysis','Cycle detection required','No natural ordering of elements'],
+    applications:['Social networks (Facebook friends graph)','GPS navigation and route finding','Internet routing protocols','Dependency graphs in compilers'],
+    complexity:[
+      ['Add Vertex','O(1)','O(1)','g','g'],
+      ['Add Edge','O(1)','O(1)','g','g'],
+      ['Remove Edge','O(E)','O(E)','y','y'],
+      ['DFS / BFS','O(V+E)','O(V+E)','y','y'],
+      ['Search','O(V+E)','O(V+E)','y','y'],
+    ],
+    vizId:'graph'
+  }
+};
+
+/* ─── Build DS detail page HTML ─── */
+function buildDSPage(ds,info){
+  const colMap={blue:'rgba(59,130,246,0.15);color:var(--blue)',purple:'rgba(139,92,246,0.15);color:var(--purple)',green:'rgba(16,185,129,0.15);color:var(--green)',orange:'rgba(249,115,22,0.15);color:var(--orange)',teal:'rgba(20,184,166,0.15);color:var(--teal)',pink:'rgba(236,72,153,0.15);color:var(--pink)'};
+  const tagStyle=colMap[info.color]||colMap.blue;
+  const cxRows=info.complexity.map(([op,avg,worst,ac,wc])=>
+    `<tr><td>${op}</td><td class="${ac}">${avg}</td><td class="${wc}">${worst}</td></tr>`).join('');
+  const vizHTML=buildVizHTML(ds,info.color);
+
+  return `
+  <div class="ds-header">
+    <div class="ds-big-icon">${info.icon}</div>
+    <div class="ds-header-text">
+      <div class="ds-tag" style="background:${tagStyle}">${info.tag}</div>
+      <h1>${info.name}</h1>
+      <p>${info.desc}</p>
+    </div>
+  </div>
+
+  <div class="info-row">
+    <div class="info-box">
+      <h4>✅ Advantages</h4>
+      <ul>${info.advantages.map(a=>`<li>${a}</li>`).join('')}</ul>
+    </div>
+    <div class="info-box">
+      <h4>❌ Disadvantages</h4>
+      <ul>${info.disadvantages.map(d=>`<li>${d}</li>`).join('')}</ul>
+    </div>
+    <div class="info-box">
+      <h4>🌍 Applications</h4>
+      <ul>${info.applications.map(a=>`<li>${a}</li>`).join('')}</ul>
+    </div>
+  </div>
+
+  <div class="complexity-wrap">
+    <h4>⏱ Time Complexity</h4>
+    <table class="cx-table">
+      <thead><tr><th>Operation</th><th>Average</th><th>Worst</th></tr></thead>
+      <tbody>${cxRows}</tbody>
+    </table>
+  </div>
+
+  <div class="viz-panel">
+    <div class="viz-panel-title">
+      <span>🎮 Interactive ${info.name} Visualizer</span>
+      <div class="speed-row">
+        <label>Speed</label>
+        <input type="range" min="1" max="5" value="3" id="speed-${ds}"/>
+      </div>
+    </div>
+    ${vizHTML}
+    <div class="status" id="status-${ds}">Empty — use the controls above to start.</div>
+    <div class="hist" id="hist-${ds}"><div class="hist-title">Operation History</div></div>
+  </div>`;
+}
+
+/* ─── Build visualizer controls per DS ─── */
+function buildVizHTML(ds,color){
+  if(ds==='array') return `
+    <div class="inp-row">
+      <input class="vi" type="number" id="av" placeholder="Value"/>
+      <input class="vi" type="number" id="ai" placeholder="Index"/>
+    </div>
+    <div class="btn-row">
+      <button class="vb ${color}" onclick="aOp('set')">Set at Index</button>
+      <button class="vb ${color}" onclick="aOp('push')">Add to End</button>
+      <button class="vb green" onclick="aOp('search')">Search</button>
+      <button class="vb green" onclick="aOp('traverse')">Traverse</button>
+      <button class="vb red" onclick="aOp('del')">Delete Index</button>
+      <button class="vb red" onclick="aOp('clear')">Clear</button>
+      <button class="vb gray" onclick="aOp('reset')">Reset</button>
+    </div>
+    <div class="viz-area" id="a-display"><span class="empty-hint">[ array is empty ]</span></div>`;
+
+  if(ds==='stack') return `
+    <div class="inp-row">
+      <input class="vi" type="number" id="sv" placeholder="Value"/>
+      <span class="info-badge" id="s-badge">Size: 0 / 10</span>
+    </div>
+    <div class="btn-row">
+      <button class="vb ${color}" onclick="sOp('push')">Push</button>
+      <button class="vb red" onclick="sOp('pop')">Pop</button>
+      <button class="vb blue" onclick="sOp('peek')">Peek</button>
+      <button class="vb green" onclick="sOp('isEmpty')">Is Empty</button>
+      <button class="vb yellow" onclick="sOp('isFull')">Is Full</button>
+      <button class="vb gray" onclick="sOp('size')">Size</button>
+      <button class="vb red" onclick="sOp('clear')">Clear</button>
+      <button class="vb gray" onclick="sOp('reset')">Reset</button>
+    </div>
+    <div class="viz-area" id="s-display">
+      <div style="text-align:center;padding:4px 0 2px;font-size:.72rem;color:var(--text3);font-family:var(--mono)">TOP ↑</div>
+      <div id="s-cells"></div>
+      <div class="stack-base">── BASE ──</div>
+    </div>`;
+
+  if(ds==='queue') return `
+    <div class="inp-row">
+      <input class="vi" type="number" id="qv" placeholder="Value"/>
+      <span class="info-badge" id="q-badge">Size: 0 / 8</span>
+    </div>
+    <div class="btn-row">
+      <button class="vb ${color}" onclick="qOp('enqueue')">Enqueue</button>
+      <button class="vb red" onclick="qOp('dequeue')">Dequeue</button>
+      <button class="vb blue" onclick="qOp('front')">Front</button>
+      <button class="vb blue" onclick="qOp('rear')">Rear</button>
+      <button class="vb green" onclick="qOp('isEmpty')">Is Empty</button>
+      <button class="vb yellow" onclick="qOp('isFull')">Is Full</button>
+      <button class="vb gray" onclick="qOp('size')">Size</button>
+      <button class="vb red" onclick="qOp('clear')">Clear</button>
+      <button class="vb gray" onclick="qOp('reset')">Reset</button>
+    </div>
+    <div class="viz-area" id="q-display">
+      <div class="queue-wrap">
+        <span class="ql f">FRONT</span>
+        <div id="q-cells" style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow-x:auto"><span class="empty-hint">[ empty ]</span></div>
+        <span class="ql r">REAR</span>
+      </div>
+    </div>`;
+
+  if(ds==='ll') return `
+    <div class="inp-row">
+      <input class="vi" type="number" id="lv" placeholder="Value"/>
+      <input class="vi" type="number" id="lp" placeholder="Position"/>
+    </div>
+    <div class="btn-row">
+      <button class="vb ${color}" onclick="lOp('head')">Insert Head</button>
+      <button class="vb ${color}" onclick="lOp('tail')">Insert Tail</button>
+      <button class="vb ${color}" onclick="lOp('pos')">Insert at Pos</button>
+      <button class="vb red" onclick="lOp('dhead')">Delete Head</button>
+      <button class="vb red" onclick="lOp('dtail')">Delete Tail</button>
+      <button class="vb red" onclick="lOp('dpos')">Delete at Pos</button>
+      <button class="vb green" onclick="lOp('search')">Search</button>
+      <button class="vb blue" onclick="lOp('update')">Update</button>
+      <button class="vb red" onclick="lOp('clear')">Clear</button>
+      <button class="vb gray" onclick="lOp('reset')">Reset</button>
+    </div>
+    <div class="viz-area" id="l-display"><span class="empty-hint">[ empty list ]</span></div>`;
+
+  if(ds==='tree') return `
+    <div class="inp-row">
+      <input class="vi" type="number" id="tv" placeholder="Value"/>
+    </div>
+    <div class="btn-row">
+      <button class="vb ${color}" onclick="tOp('insert')">Insert</button>
+      <button class="vb red" onclick="tOp('delete')">Delete</button>
+      <button class="vb blue" onclick="tOp('search')">Search</button>
+      <button class="vb green" onclick="tOp('min')">Minimum</button>
+      <button class="vb green" onclick="tOp('max')">Maximum</button>
+      <button class="vb gray" onclick="tOp('height')">Height</button>
+      <button class="vb yellow" onclick="tOp('inorder')">Inorder</button>
+      <button class="vb yellow" onclick="tOp('preorder')">Preorder</button>
+      <button class="vb yellow" onclick="tOp('postorder')">Postorder</button>
+      <button class="vb yellow" onclick="tOp('levelorder')">Level Order</button>
+      <button class="vb red" onclick="tOp('clear')">Clear</button>
+      <button class="vb gray" onclick="tOp('reset')">Reset</button>
+    </div>
+    <div class="tree-wrap"><svg id="tree-svg" width="100%" height="340"></svg></div>`;
+
+  if(ds==='graph') return `
+    <div class="inp-row">
+      <input class="vi sm" type="text" id="gv" placeholder="Vertex" maxlength="3"/>
+      <input class="vi sm" type="text" id="gf" placeholder="From" maxlength="3"/>
+      <input class="vi sm" type="text" id="gt" placeholder="To" maxlength="3"/>
+      <span style="font-size:.75rem;color:var(--text3);font-style:italic">Drag vertices</span>
+    </div>
+    <div class="btn-row">
+      <button class="vb ${color}" onclick="grOp('addV')">Add Vertex</button>
+      <button class="vb red" onclick="grOp('delV')">Del Vertex</button>
+      <button class="vb blue" onclick="grOp('addE')">Add Edge</button>
+      <button class="vb red" onclick="grOp('delE')">Del Edge</button>
+      <button class="vb purple" onclick="grOp('dfs')">DFS</button>
+      <button class="vb green" onclick="grOp('bfs')">BFS</button>
+      <button class="vb red" onclick="grOp('clear')">Clear</button>
+      <button class="vb gray" onclick="grOp('reset')">Reset</button>
+    </div>
+    <div class="graph-wrap"><svg id="graph-svg" width="100%" height="320"></svg></div>`;
+  return '';
+}
+
+/* ─── Helpers ─── */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function spd(id){ const e=document.getElementById(id); return e? Math.max(80,680-(+e.value)*120):300; }
+function setStatus(id,msg,type=''){
+  const el=document.getElementById('status-'+id);
+  if(el){el.textContent=msg;el.className='status '+type;}
+}
+function addHist(id,label,detail){
+  const h=document.getElementById('hist-'+id);
+  if(!h) return;
+  const d=document.createElement('div');d.className='hitem';
+  const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  d.innerHTML=`<span class="hl">[${label}]</span> ${detail} <span style="float:right;color:var(--text3)">${ts}</span>`;
+  h.appendChild(d);h.scrollTop=h.scrollHeight;
+}
+
+/* ════════════════════════════════════════
+   ARRAY LOGIC
+════════════════════════════════════════ */
+let ARR=[], AMAX=12;
+
+function renderArr(hl=-1,found=-1,nw=-1,dl=-1){
+  const el=document.getElementById('a-display');
+  if(!el) return;
+  if(!ARR.length){el.innerHTML='<span class="empty-hint">[ array is empty ]</span>';return;}
+  el.innerHTML='';
+  const w=document.createElement('div');w.className='arr-wrap';
+  ARR.forEach((v,i)=>{
+    let cls='';
+    if(i===dl) cls='del';
+    else if(i===found) cls='found';
+    else if(i===hl) cls='hl';
+    else if(i===nw) cls='new';
+    const c=document.createElement('div');c.className=`ac ${cls}`;
+    c.innerHTML=`<div class="av">${v}</div><div class="ai">[${i}]</div>`;
+    w.appendChild(c);
+  });
+  el.appendChild(w);
+}
+
+async function aOp(op){
+  const v=+document.getElementById('av').value;
+  const i=document.getElementById('ai').value!==''?+document.getElementById('ai').value:null;
+  const d=spd('speed-array');
+  if(op==='push'){
+    if(document.getElementById('av').value===''){toast('Enter a value','error');SFX.err();return;}
+    if(ARR.length>=AMAX){toast('Array full!','error');SFX.err();return;}
+    ARR.push(v);renderArr(-1,-1,ARR.length-1);SFX.ok();
+    setStatus('array',`✔ Added ${v} at index ${ARR.length-1}`,'ok');
+    addHist('array','ADD_END',`val=${v} → idx ${ARR.length-1}`);
+    toast(`Added ${v} at end`,'success');
+  } else if(op==='set'){
+    if(document.getElementById('av').value===''||i===null){toast('Enter value and index','error');SFX.err();return;}
+    if(i<0||i>=ARR.length){toast(`Index out of range [0–${ARR.length-1}]`,'error');SFX.err();return;}
+    const old=ARR[i];ARR[i]=v;renderArr(-1,i);SFX.ok();
+    setStatus('array',`✔ Updated index ${i}: ${old} → ${v}`,'ok');
+    addHist('array','UPDATE',`idx=${i}: ${old}→${v}`);toast(`Updated index ${i}`,'success');
+  } else if(op==='del'){
+    if(i===null){toast('Enter index to delete','error');SFX.err();return;}
+    if(i<0||i>=ARR.length){toast(`Index out of range`,'error');SFX.err();return;}
+    renderArr(-1,-1,-1,i);await sleep(d);
+    const rm=ARR.splice(i,1)[0];renderArr();SFX.del();
+    setStatus('array',`✔ Deleted ${rm} from index ${i}. Elements shifted left.`,'ok');
+    addHist('array','DELETE',`val=${rm} from idx=${i}`);toast(`Deleted ${rm}`,'success');
+  } else if(op==='search'){
+    if(document.getElementById('av').value===''){toast('Enter value to search','error');SFX.err();return;}
+    let found=-1;
+    for(let x=0;x<ARR.length;x++){
+      renderArr(x);await sleep(d*0.5);
+      if(ARR[x]===v){found=x;break;}
+    }
+    if(found>=0){renderArr(-1,found);SFX.found();setStatus('array',`✔ Found ${v} at index ${found} — Linear Search O(n)`,'ok');addHist('array','SEARCH',`val=${v} → idx ${found}`);toast(`Found ${v} at [${found}]`,'success');}
+    else{renderArr();SFX.err();setStatus('array',`✘ ${v} not found in array`,'err');addHist('array','SEARCH',`val=${v} → not found`);toast(`${v} not found`,'error');}
+  } else if(op==='traverse'){
+    if(!ARR.length){toast('Array is empty','error');SFX.err();return;}
+    for(let x=0;x<ARR.length;x++){renderArr(x);await sleep(d);}
+    renderArr();SFX.info();
+    setStatus('array',`Traverse: [${ARR.join(', ')}]`,'nfo');addHist('array','TRAVERSE',`[${ARR.join(', ')}]`);
+  } else if(op==='clear'){
+    ARR=[];renderArr();SFX.clr();setStatus('array','Array cleared.','');addHist('array','CLEAR','All elements removed');toast('Cleared','info');
+  } else if(op==='reset'){
+    ARR=[];document.getElementById('av').value='';document.getElementById('ai').value='';
+    renderArr();SFX.clr();setStatus('array','Array reset.','');addHist('array','RESET','Array reset');toast('Reset','info');
+  }
+  document.getElementById('av').value='';document.getElementById('ai').value='';
+}
+
+/* ════════════════════════════════════════
+   STACK LOGIC
+════════════════════════════════════════ */
+let STK=[], SMAX=10;
+function renderStk(){
+  const c=document.getElementById('s-cells');
+  const b=document.getElementById('s-badge');
+  if(!c) return;
+  if(b) b.textContent=`Size: ${STK.length} / ${SMAX}`;
+  c.innerHTML='';
+  if(!STK.length){c.innerHTML='<div style="text-align:center;color:var(--text3);font-size:.8rem;font-family:var(--mono);padding:8px">[ empty ]</div>';return;}
+  [...STK].reverse().forEach((v,i)=>{
+    const d=document.createElement('div');
+    d.className=`sc ${i===0?'top':''}`;d.textContent=v;c.appendChild(d);
+  });
+}
+async function sOp(op){
+  const vEl=document.getElementById('sv');
+  const v=vEl&&vEl.value!==''?+vEl.value:null;
+  const d=spd('speed-stack');
+  if(op==='push'){
+    if(v===null){toast('Enter a value','error');SFX.err();return;}
+    if(STK.length>=SMAX){toast('Stack Overflow!','error');SFX.err();setStatus('stack','✘ Stack Overflow! Stack is full.','err');return;}
+    STK.push(v);renderStk();
+    const top=document.querySelector('#s-cells .sc');
+    if(top){top.classList.add('push-anim');setTimeout(()=>top.classList.remove('push-anim'),400);}
+    SFX.ok();setStatus('stack',`✔ PUSH ${v} → added to TOP. Size=${STK.length}`,'ok');
+    addHist('stack','PUSH',`val=${v} | size=${STK.length}`);toast(`Pushed ${v}`,'success');
+  } else if(op==='pop'){
+    if(!STK.length){toast('Stack Underflow!','error');SFX.err();setStatus('stack','✘ Stack Underflow! Stack is empty.','err');return;}
+    const top=document.querySelector('#s-cells .sc');
+    if(top){top.classList.add('pop-anim');await sleep(d);}
+    const p=STK.pop();renderStk();SFX.del();
+    setStatus('stack',`✔ POP → removed ${p} from TOP. Size=${STK.length}`,'ok');
+    addHist('stack','POP',`val=${p} | size=${STK.length}`);toast(`Popped ${p}`,'success');
+  } else if(op==='peek'){
+    if(!STK.length){toast('Stack empty','error');SFX.err();return;}
+    const p=STK[STK.length-1];SFX.info();
+    setStatus('stack',`👁 PEEK → TOP = ${p}`,'nfo');addHist('stack','PEEK',`top=${p}`);toast(`Top = ${p}`,'info');
+  } else if(op==='isEmpty'){
+    const e=!STK.length;SFX.info();
+    setStatus('stack',`IS_EMPTY → ${e?'Yes, stack is empty.':'No, '+STK.length+' element(s) present.'}`,'nfo');
+    addHist('stack','IS_EMPTY',`result=${e}`);toast(e?'Stack is empty':'Stack not empty','info');
+  } else if(op==='isFull'){
+    const f=STK.length>=SMAX;SFX.info();
+    setStatus('stack',`IS_FULL → ${f?'Yes, stack is full!':'No, '+(SMAX-STK.length)+' slots available.'}`,'nfo');
+    addHist('stack','IS_FULL',`result=${f}`);toast(f?'Stack is full':'Stack not full','info');
+  } else if(op==='size'){
+    SFX.info();setStatus('stack',`SIZE → ${STK.length} element(s)`,'nfo');addHist('stack','SIZE',`size=${STK.length}`);toast(`Size = ${STK.length}`,'info');
+  } else if(op==='clear'){
+    STK=[];renderStk();SFX.clr();setStatus('stack','Stack cleared.','');addHist('stack','CLEAR','Emptied');toast('Cleared','info');
+  } else if(op==='reset'){
+    STK=[];if(vEl)vEl.value='';renderStk();SFX.clr();setStatus('stack','Stack reset.','');addHist('stack','RESET','Reset');toast('Reset','info');
+  }
+  if(vEl)vEl.value='';
+}
+
+/* ════════════════════════════════════════
+   QUEUE LOGIC
+════════════════════════════════════════ */
+let QUE=[], QMAX=8;
+function renderQue(){
+  const c=document.getElementById('q-cells');
+  const b=document.getElementById('q-badge');
+  if(!c) return;
+  if(b) b.textContent=`Size: ${QUE.length} / ${QMAX}`;
+  c.innerHTML='';
+  if(!QUE.length){c.innerHTML='<span class="empty-hint">[ empty ]</span>';return;}
+  QUE.forEach((v,i)=>{
+    const iF=i===0,iR=i===QUE.length-1;
+    const d=document.createElement('div');
+    d.className=`qc ${iF?'front':''} ${iR?'rear':''}`;d.textContent=v;c.appendChild(d);
+    if(i<QUE.length-1){const a=document.createElement('span');a.className='q-arr';a.textContent='→';c.appendChild(a);}
+  });
+}
+async function qOp(op){
+  const vEl=document.getElementById('qv');
+  const v=vEl&&vEl.value!==''?+vEl.value:null;
+  const d=spd('speed-queue');
+  if(op==='enqueue'){
+    if(v===null){toast('Enter a value','error');SFX.err();return;}
+    if(QUE.length>=QMAX){toast('Queue full!','error');SFX.err();setStatus('queue','✘ Queue full.','err');return;}
+    QUE.push(v);renderQue();
+    const last=document.querySelector('#q-cells .qc:last-of-type');
+    if(last){last.classList.add('eq');setTimeout(()=>last.classList.remove('eq'),400);}
+    SFX.ok();setStatus('queue',`✔ ENQUEUE ${v} → added at REAR. Size=${QUE.length}`,'ok');
+    addHist('queue','ENQUEUE',`val=${v} | size=${QUE.length}`);toast(`Enqueued ${v}`,'success');
+  } else if(op==='dequeue'){
+    if(!QUE.length){toast('Queue empty!','error');SFX.err();setStatus('queue','✘ Queue is empty.','err');return;}
+    const first=document.querySelector('#q-cells .qc');
+    if(first){first.classList.add('dq');await sleep(d);}
+    const dq=QUE.shift();renderQue();SFX.del();
+    setStatus('queue',`✔ DEQUEUE → removed ${dq} from FRONT. Size=${QUE.length}`,'ok');
+    addHist('queue','DEQUEUE',`val=${dq} | size=${QUE.length}`);toast(`Dequeued ${dq}`,'success');
+  } else if(op==='front'){
+    if(!QUE.length){toast('Queue empty','error');SFX.err();return;}
+    SFX.info();setStatus('queue',`FRONT → ${QUE[0]}`,'nfo');addHist('queue','FRONT',`front=${QUE[0]}`);toast(`Front = ${QUE[0]}`,'info');
+  } else if(op==='rear'){
+    if(!QUE.length){toast('Queue empty','error');SFX.err();return;}
+    SFX.info();setStatus('queue',`REAR → ${QUE[QUE.length-1]}`,'nfo');addHist('queue','REAR',`rear=${QUE[QUE.length-1]}`);toast(`Rear = ${QUE[QUE.length-1]}`,'info');
+  } else if(op==='isEmpty'){
+    const e=!QUE.length;SFX.info();setStatus('queue',`IS_EMPTY → ${e?'Yes':'No, size='+QUE.length}`,'nfo');addHist('queue','IS_EMPTY',`result=${e}`);toast(e?'Empty':'Not empty','info');
+  } else if(op==='isFull'){
+    const f=QUE.length>=QMAX;SFX.info();setStatus('queue',`IS_FULL → ${f?'Yes':'No, '+(QMAX-QUE.length)+' slots left'}`,'nfo');addHist('queue','IS_FULL',`result=${f}`);toast(f?'Full':'Not full','info');
+  } else if(op==='size'){
+    SFX.info();setStatus('queue',`SIZE → ${QUE.length}`,'nfo');addHist('queue','SIZE',`size=${QUE.length}`);toast(`Size = ${QUE.length}`,'info');
+  } else if(op==='clear'){
+    QUE=[];renderQue();SFX.clr();setStatus('queue','Queue cleared.','');addHist('queue','CLEAR','Emptied');toast('Cleared','info');
+  } else if(op==='reset'){
+    QUE=[];if(vEl)vEl.value='';renderQue();SFX.clr();setStatus('queue','Queue reset.','');addHist('queue','RESET','Reset');toast('Reset','info');
+  }
+  if(vEl)vEl.value='';
+}
+
+/* ════════════════════════════════════════
+   LINKED LIST LOGIC
+════════════════════════════════════════ */
+class LN{constructor(v){this.v=v;this.n=null;}}
+let LH=null,LS=0;
+function lToArr(){const a=[];let c=LH;while(c){a.push(c.v);c=c.n;}return a;}
+function renderLL(hl=-1){
+  const el=document.getElementById('l-display');
+  if(!el) return;
+  if(!LH){el.innerHTML='<span class="empty-hint">[ empty list ]</span>';return;}
+  el.innerHTML='';
+  const w=document.createElement('div');w.className='ll-wrap';
+  let c=LH,i=0;
+  while(c){
+    const nd=document.createElement('div');nd.className=`ll-node ${i===hl?'hl':''}`;
+    nd.innerHTML=`<div class="ll-box"><div class="ll-d">${c.v}</div><div class="ll-n">${c.n?'→':'∅'}</div></div>`;
+    w.appendChild(nd);
+    if(c.n){const a=document.createElement('span');a.className='ll-arr';a.textContent='→';w.appendChild(a);}
+    else{const n=document.createElement('div');n.className='ll-node';n.innerHTML='<span class="ll-arr">→</span><div class="ll-null">NULL</div>';w.appendChild(n);}
+    c=c.n;i++;
+  }
+  el.appendChild(w);
+}
+async function lOp(op){
+  const vEl=document.getElementById('lv'),pEl=document.getElementById('lp');
+  const v=vEl&&vEl.value!==''?+vEl.value:null;
+  const p=pEl&&pEl.value!==''?+pEl.value:null;
+  const d=spd('speed-ll');
+  if(op==='head'){
+    if(v===null){toast('Enter a value','error');SFX.err();return;}
+    const nd=new LN(v);nd.n=LH;LH=nd;LS++;renderLL(0);SFX.ok();
+    setStatus('ll',`✔ Inserted ${v} at HEAD. O(1).`,'ok');addHist('ll','INS_HEAD',`val=${v} | size=${LS}`);toast(`Inserted ${v} at head`,'success');
+  } else if(op==='tail'){
+    if(v===null){toast('Enter a value','error');SFX.err();return;}
+    const nd=new LN(v);
+    if(!LH)LH=nd;else{let c=LH;while(c.n)c=c.n;c.n=nd;}
+    LS++;renderLL(LS-1);SFX.ok();
+    setStatus('ll',`✔ Inserted ${v} at TAIL. O(n).`,'ok');addHist('ll','INS_TAIL',`val=${v} | size=${LS}`);toast(`Inserted ${v} at tail`,'success');
+  } else if(op==='pos'){
+    if(v===null||p===null){toast('Enter value and position','error');SFX.err();return;}
+    if(p<0||p>LS){toast(`Position out of range [0–${LS}]`,'error');SFX.err();return;}
+    if(p===0){const nd=new LN(v);nd.n=LH;LH=nd;LS++;renderLL(0);}
+    else{const nd=new LN(v);let c=LH,i=0;while(i<p-1){c=c.n;i++;}nd.n=c.n;c.n=nd;LS++;renderLL(p);}
+    SFX.ok();setStatus('ll',`✔ Inserted ${v} at position ${p}.`,'ok');addHist('ll','INS_POS',`val=${v} pos=${p}`);toast(`Inserted at pos ${p}`,'success');
+  } else if(op==='dhead'){
+    if(!LH){toast('List empty','error');SFX.err();return;}
+    const rv=LH.v;LH=LH.n;LS--;renderLL();SFX.del();
+    setStatus('ll',`✔ Deleted HEAD (val=${rv}). O(1).`,'ok');addHist('ll','DEL_HEAD',`val=${rv} | size=${LS}`);toast(`Deleted head: ${rv}`,'success');
+  } else if(op==='dtail'){
+    if(!LH){toast('List empty','error');SFX.err();return;}
+    let rv;
+    if(!LH.n){rv=LH.v;LH=null;}else{let c=LH;while(c.n.n)c=c.n;rv=c.n.v;c.n=null;}
+    LS--;renderLL();SFX.del();
+    setStatus('ll',`✔ Deleted TAIL (val=${rv}). O(n).`,'ok');addHist('ll','DEL_TAIL',`val=${rv} | size=${LS}`);toast(`Deleted tail: ${rv}`,'success');
+  } else if(op==='dpos'){
+    if(!LH){toast('List empty','error');SFX.err();return;}
+    if(p===null){toast('Enter position','error');SFX.err();return;}
+    if(p<0||p>=LS){toast(`Position out of range`,'error');SFX.err();return;}
+    let rv;
+    if(p===0){rv=LH.v;LH=LH.n;}else{let c=LH,i=0;while(i<p-1){c=c.n;i++;}rv=c.n.v;c.n=c.n.n;}
+    LS--;renderLL();SFX.del();
+    setStatus('ll',`✔ Deleted position ${p} (val=${rv}).`,'ok');addHist('ll','DEL_POS',`val=${rv} pos=${p}`);toast(`Deleted ${rv}`,'success');
+  } else if(op==='search'){
+    if(v===null){toast('Enter value','error');SFX.err();return;}
+    let c=LH,i=0,f=-1;
+    while(c){renderLL(i);await sleep(d*0.5);if(c.v===v){f=i;break;}c=c.n;i++;}
+    if(f>=0){renderLL(f);SFX.found();setStatus('ll',`✔ Found ${v} at position ${f}.`,'ok');addHist('ll','SEARCH',`val=${v} → pos=${f}`);toast(`Found at pos ${f}`,'success');}
+    else{renderLL();SFX.err();setStatus('ll',`✘ ${v} not found.`,'err');addHist('ll','SEARCH',`val=${v} → not found`);toast(`${v} not found`,'error');}
+  } else if(op==='update'){
+    if(v===null||p===null){toast('Enter value and position','error');SFX.err();return;}
+    if(p<0||p>=LS){toast('Position out of range','error');SFX.err();return;}
+    let c=LH,i=0;while(i<p){c=c.n;i++;}
+    const old=c.v;c.v=v;renderLL(p);SFX.ok();
+    setStatus('ll',`✔ Updated pos ${p}: ${old} → ${v}.`,'ok');addHist('ll','UPDATE',`pos=${p}: ${old}→${v}`);toast(`Updated pos ${p}`,'success');
+  } else if(op==='clear'){
+    LH=null;LS=0;renderLL();SFX.clr();setStatus('ll','List cleared.','');addHist('ll','CLEAR','Emptied');toast('Cleared','info');
+  } else if(op==='reset'){
+    LH=null;LS=0;if(vEl)vEl.value='';if(pEl)pEl.value='';renderLL();SFX.clr();setStatus('ll','List reset.','');addHist('ll','RESET','Reset');toast('Reset','info');
+  }
+  if(vEl)vEl.value='';if(pEl)pEl.value='';
+}
+
+/* ════════════════════════════════════════
+   BST LOGIC
+════════════════════════════════════════ */
+class TN{constructor(v){this.v=v;this.l=null;this.r=null;}}
+let TR=null;
+const bIns=(r,v)=>{if(!r)return new TN(v);if(v<r.v)r.l=bIns(r.l,v);else if(v>r.v)r.r=bIns(r.r,v);return r;};
+const bSrch=(r,v,p=[])=>{if(!r)return null;p.push(r.v);if(v===r.v)return p;return v<r.v?bSrch(r.l,v,p):bSrch(r.r,v,p);};
+const bMin=(r)=>{if(!r)return null;while(r.l)r=r.l;return r.v;};
+const bMax=(r)=>{if(!r)return null;while(r.r)r=r.r;return r.v;};
+const bH=(r)=>!r?0:1+Math.max(bH(r.l),bH(r.r));
+const bIn=(r,a=[])=>{if(r){bIn(r.l,a);a.push(r.v);bIn(r.r,a);}return a;};
+const bPre=(r,a=[])=>{if(r){a.push(r.v);bPre(r.l,a);bPre(r.r,a);}return a;};
+const bPost=(r,a=[])=>{if(r){bPost(r.l,a);bPost(r.r,a);a.push(r.v);}return a;};
+const bLvl=(r)=>{if(!r)return[];const res=[],q=[r];while(q.length){const n=q.shift();res.push(n.v);if(n.l)q.push(n.l);if(n.r)q.push(n.r);}return res;};
+function bDel(r,v){
+  if(!r)return null;
+  if(v<r.v)r.l=bDel(r.l,v);
+  else if(v>r.v)r.r=bDel(r.r,v);
+  else{
+    if(!r.l)return r.r;if(!r.r)return r.l;
+    let s=r.r;while(s.l)s=s.l;r.v=s.v;r.r=bDel(r.r,s.v);
+  }
+  return r;
+}
+function drawTree(hl=[],found=[]){
+  const svg=document.getElementById('tree-svg');if(!svg)return;
+  svg.innerHTML='';
+  const W=svg.clientWidth||svg.parentElement?.clientWidth||500,H=340,R=22,LH=68;
+  if(!TR){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="rgba(255,255,255,0.18)" font-family="JetBrains Mono" font-size="13">Empty BST — insert values</text>`;return;}
+  const pos=new Map();
+  function calc(n,lv,l,r){if(!n)return;const x=(l+r)/2,y=30+lv*LH;pos.set(n,{x,y});calc(n.l,lv+1,l,(l+r)/2);calc(n.r,lv+1,(l+r)/2,r);}
+  calc(TR,0,0,W);
+  pos.forEach((p,n)=>{
+    const draw=(child)=>{if(!child||!pos.has(child))return;const cp=pos.get(child);const ln=document.createElementNS('http://www.w3.org/2000/svg','line');ln.setAttribute('x1',p.x);ln.setAttribute('y1',p.y);ln.setAttribute('x2',cp.x);ln.setAttribute('y2',cp.y);ln.setAttribute('class','tree-edge');svg.appendChild(ln);};
+    draw(n.l);draw(n.r);
+  });
+  pos.forEach((p,n)=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class',`tree-node ${hl.includes(n.v)?'hl':''} ${found.includes(n.v)?'found':''}`);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',R);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',p.x);t.setAttribute('y',p.y);t.textContent=n.v;
+    g.appendChild(c);g.appendChild(t);svg.appendChild(g);
+  });
+}
+async function tOp(op){
+  const vEl=document.getElementById('tv');
+  const v=vEl&&vEl.value!==''?+vEl.value:null;
+  const d=spd('speed-tree');
+  if(op==='insert'){
+    if(v===null){toast('Enter a value','error');SFX.err();return;}
+    if(bSrch(TR,v)){toast(`${v} already exists`,'error');SFX.err();return;}
+    TR=bIns(TR,v);drawTree([v]);SFX.ok();
+    setStatus('tree',`✔ Inserted ${v}. Height=${bH(TR)}`,'ok');addHist('tree','INSERT',`val=${v}`);toast(`Inserted ${v}`,'success');
+  } else if(op==='delete'){
+    if(v===null){toast('Enter a value','error');SFX.err();return;}
+    if(!bSrch(TR,v)){toast(`${v} not found`,'error');SFX.err();return;}
+    TR=bDel(TR,v);drawTree();SFX.del();
+    setStatus('tree',`✔ Deleted ${v}.`,'ok');addHist('tree','DELETE',`val=${v}`);toast(`Deleted ${v}`,'success');
+  } else if(op==='search'){
+    if(v===null){toast('Enter a value','error');SFX.err();return;}
+    const path=bSrch(TR,v);
+    if(!path){drawTree();SFX.err();setStatus('tree',`✘ ${v} not found.`,'err');addHist('tree','SEARCH',`val=${v} → not found`);toast(`${v} not found`,'error');return;}
+    for(let i=0;i<path.length;i++){drawTree(path.slice(0,i+1));await sleep(d);}
+    drawTree([],[v]);SFX.found();
+    setStatus('tree',`✔ Found ${v}. Path: ${path.join(' → ')}`,'ok');addHist('tree','SEARCH',`val=${v} path:${path.join('→')}`);toast(`Found ${v}`,'success');
+  } else if(op==='min'){
+    if(!TR){toast('BST empty','error');SFX.err();return;}
+    const m=bMin(TR);drawTree([],[m]);SFX.found();
+    setStatus('tree',`MINIMUM → ${m}`,'nfo');addHist('tree','MIN',`min=${m}`);toast(`Min = ${m}`,'info');
+  } else if(op==='max'){
+    if(!TR){toast('BST empty','error');SFX.err();return;}
+    const m=bMax(TR);drawTree([],[m]);SFX.found();
+    setStatus('tree',`MAXIMUM → ${m}`,'nfo');addHist('tree','MAX',`max=${m}`);toast(`Max = ${m}`,'info');
+  } else if(op==='height'){
+    if(!TR){toast('BST empty','error');SFX.err();return;}
+    const h=bH(TR);SFX.info();
+    setStatus('tree',`HEIGHT → ${h} levels`,'nfo');addHist('tree','HEIGHT',`h=${h}`);toast(`Height = ${h}`,'info');
+  } else if(op==='inorder'){
+    if(!TR){toast('BST empty','error');SFX.err();return;}
+    const arr=bIn(TR);for(let i=0;i<arr.length;i++){drawTree([arr[i]]);await sleep(d*0.7);}
+    drawTree();SFX.info();setStatus('tree',`INORDER (L→Root→R): [${arr.join(', ')}]`,'nfo');addHist('tree','INORDER',arr.join(', '));toast(`Inorder done`,'info');
+  } else if(op==='preorder'){
+    if(!TR){toast('BST empty','error');SFX.err();return;}
+    const arr=bPre(TR);for(let i=0;i<arr.length;i++){drawTree([arr[i]]);await sleep(d*0.7);}
+    drawTree();SFX.info();setStatus('tree',`PREORDER (Root→L→R): [${arr.join(', ')}]`,'nfo');addHist('tree','PREORDER',arr.join(', '));toast(`Preorder done`,'info');
+  } else if(op==='postorder'){
+    if(!TR){toast('BST empty','error');SFX.err();return;}
+    const arr=bPost(TR);for(let i=0;i<arr.length;i++){drawTree([arr[i]]);await sleep(d*0.7);}
+    drawTree();SFX.info();setStatus('tree',`POSTORDER (L→R→Root): [${arr.join(', ')}]`,'nfo');addHist('tree','POSTORDER',arr.join(', '));toast(`Postorder done`,'info');
+  } else if(op==='levelorder'){
+    if(!TR){toast('BST empty','error');SFX.err();return;}
+    const arr=bLvl(TR);for(let i=0;i<arr.length;i++){drawTree([arr[i]]);await sleep(d*0.7);}
+    drawTree();SFX.info();setStatus('tree',`LEVEL ORDER: [${arr.join(', ')}]`,'nfo');addHist('tree','LEVEL_ORDER',arr.join(', '));toast(`Level order done`,'info');
+  } else if(op==='clear'){
+    TR=null;drawTree();SFX.clr();setStatus('tree','BST cleared.','');addHist('tree','CLEAR','Emptied');toast('Cleared','info');
+  } else if(op==='reset'){
+    TR=null;if(vEl)vEl.value='';drawTree();SFX.clr();setStatus('tree','BST reset.','');addHist('tree','RESET','Reset');toast('Reset','info');
+  }
+  if(vEl)vEl.value='';
+}
+
+/* ════════════════════════════════════════
+   GRAPH LOGIC
+════════════════════════════════════════ */
+let GV=new Map(),GE=[],GDrag=null;
+function randomGPos(W,H){return{x:60+Math.random()*(W-120),y:60+Math.random()*(H-120)};}
+function drawGraph(hlV=[],hlE=[]){
+  const svg=document.getElementById('graph-svg');if(!svg)return;
+  const W=svg.clientWidth||svg.parentElement?.clientWidth||500,H=320,R=22;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML='';
+  if(!GV.size){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="rgba(255,255,255,0.18)" font-family="JetBrains Mono" font-size="13">Empty Graph — add vertices &amp; edges</text>`;return;}
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML=`<marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="rgba(236,72,153,0.6)"/></marker><marker id="arrh" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--purple)"/></marker>`;
+  svg.appendChild(defs);
+  GE.forEach(({from,to})=>{
+    const p1=GV.get(from),p2=GV.get(to);if(!p1||!p2)return;
+    const isH=hlE.some(e=>e.from===from&&e.to===to);
+    const dx=p2.x-p1.x,dy=p2.y-p1.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',p1.x+(dx/dist)*(R+2));l.setAttribute('y1',p1.y+(dy/dist)*(R+2));
+    l.setAttribute('x2',p2.x-(dx/dist)*(R+6));l.setAttribute('y2',p2.y-(dy/dist)*(R+6));
+    l.setAttribute('class',`g-edge ${isH?'hl':''}`);l.setAttribute('marker-end',isH?'url(#arrh)':'url(#arr)');
+    svg.appendChild(l);
+  });
+  GV.forEach((pos,label)=>{
+    const isV=hlV.includes(label);
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class',`gv ${isV?'visited':''}`);g.setAttribute('data-label',label);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',pos.x);c.setAttribute('cy',pos.y);c.setAttribute('r',R);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',pos.x);t.setAttribute('y',pos.y);t.textContent=label;
+    g.appendChild(c);g.appendChild(t);
+    g.addEventListener('mousedown',e=>{GDrag=label;e.preventDefault();});
+    svg.appendChild(g);
+  });
+}
+function setupGraphDrag(){
+  const svg=document.getElementById('graph-svg');if(!svg)return;
+  const move=e=>{
+    if(!GDrag)return;
+    const r=svg.getBoundingClientRect(),W=svg.clientWidth||r.width,H=svg.clientHeight||r.height;
+    const x=(e.clientX-r.left)*(W/r.width),y=(e.clientY-r.top)*(H/r.height);
+    GV.set(GDrag,{x:Math.max(26,Math.min(W-26,x)),y:Math.max(26,Math.min(H-26,y))});drawGraph();
+  };
+  const up=()=>{GDrag=null;};
+  svg.addEventListener('mousemove',move);svg.addEventListener('mouseup',up);svg.addEventListener('mouseleave',up);
+  svg.addEventListener('touchstart',e=>{const t=e.target.closest('.gv');if(t){GDrag=t.getAttribute('data-label');e.preventDefault();}},{passive:false});
+  svg.addEventListener('touchmove',e=>{
+    if(!GDrag)return;
+    const r=svg.getBoundingClientRect(),W=svg.clientWidth||r.width,H=svg.clientHeight||r.height;
+    const tc=e.touches[0],x=(tc.clientX-r.left)*(W/r.width),y=(tc.clientY-r.top)*(H/r.height);
+    GV.set(GDrag,{x:Math.max(26,Math.min(W-26,x)),y:Math.max(26,Math.min(H-26,y))});drawGraph();e.preventDefault();
+  },{passive:false});
+  svg.addEventListener('touchend',()=>{GDrag=null;});
+}
+async function grOp(op){
+  const vEl=document.getElementById('gv'),fEl=document.getElementById('gf'),tEl=document.getElementById('gt');
+  const lb=(vEl?.value||'').trim().toUpperCase();
+  const fr=(fEl?.value||'').trim().toUpperCase();
+  const to=(tEl?.value||'').trim().toUpperCase();
+  const svg=document.getElementById('graph-svg');
+  const W=svg?.clientWidth||svg?.parentElement?.clientWidth||500,H=320;
+  const d=spd('speed-tree');
+  if(op==='addV'){
+    if(!lb){toast('Enter vertex label','error');SFX.err();return;}
+    if(GV.has(lb)){toast(`${lb} already exists`,'error');SFX.err();return;}
+    GV.set(lb,randomGPos(W,H));drawGraph();setupGraphDrag();SFX.ok();
+    setStatus('graph',`✔ Added vertex "${lb}". Total: ${GV.size}`,'ok');addHist('graph','ADD_V',`label=${lb}`);toast(`Added vertex ${lb}`,'success');
+  } else if(op==='delV'){
+    if(!lb){toast('Enter vertex label','error');SFX.err();return;}
+    if(!GV.has(lb)){toast(`${lb} not found`,'error');SFX.err();return;}
+    GV.delete(lb);GE=GE.filter(e=>e.from!==lb&&e.to!==lb);drawGraph();SFX.del();
+    setStatus('graph',`✔ Deleted vertex "${lb}" and its edges.`,'ok');addHist('graph','DEL_V',`label=${lb}`);toast(`Deleted ${lb}`,'success');
+  } else if(op==='addE'){
+    if(!fr||!to){toast('Enter From and To','error');SFX.err();return;}
+    if(!GV.has(fr)){toast(`Vertex ${fr} not found`,'error');SFX.err();return;}
+    if(!GV.has(to)){toast(`Vertex ${to} not found`,'error');SFX.err();return;}
+    if(GE.some(e=>e.from===fr&&e.to===to)){toast('Edge already exists','error');SFX.err();return;}
+    GE.push({from:fr,to});drawGraph();SFX.ok();
+    setStatus('graph',`✔ Added edge ${fr} → ${to}`,'ok');addHist('graph','ADD_E',`${fr}→${to}`);toast(`Added edge ${fr}→${to}`,'success');
+  } else if(op==='delE'){
+    if(!fr||!to){toast('Enter From and To','error');SFX.err();return;}
+    const prev=GE.length;GE=GE.filter(e=>!(e.from===fr&&e.to===to));
+    if(GE.length===prev){toast(`Edge ${fr}→${to} not found`,'error');SFX.err();return;}
+    drawGraph();SFX.del();setStatus('graph',`✔ Deleted edge ${fr}→${to}`,'ok');addHist('graph','DEL_E',`${fr}→${to}`);toast(`Deleted edge`,'success');
+  } else if(op==='dfs'||op==='bfs'){
+    if(!GV.size){toast('Graph empty','error');SFX.err();return;}
+    const start=fr||[...GV.keys()][0];
+    if(!GV.has(start)){toast(`Set "From" to a valid vertex for traversal start`,'error');SFX.err();return;}
+    const adj=new Map();GV.forEach((_,v)=>adj.set(v,[]));GE.forEach(e=>adj.get(e.from)?.push(e.to));
+    let visited=[],vedges=[];
+    if(op==='dfs'){
+      function dfs(v){if(visited.includes(v))return;visited.push(v);for(const nb of(adj.get(v)||[])){if(!visited.includes(nb)){vedges.push({from:v,to:nb});dfs(nb);}}}
+      dfs(start);
+    } else {
+      visited=[start];const q=[start];
+      while(q.length){const v=q.shift();for(const nb of(adj.get(v)||[])){if(!visited.includes(nb)){visited.push(nb);q.push(nb);vedges.push({from:v,to:nb});}}}
+    }
+    for(let i=0;i<=visited.length;i++){drawGraph(visited.slice(0,i),vedges.slice(0,Math.max(0,i-1)));await sleep(d);}
+    SFX.found();setStatus('graph',`${op.toUpperCase()} from ${start}: ${visited.join(' → ')}`,'nfo');addHist('graph',op.toUpperCase(),`from=${start} → ${visited.join('→')}`);toast(`${op.toUpperCase()}: ${visited.join(' → ')}`,'info');
+    setTimeout(()=>drawGraph(),2500);
+  } else if(op==='clear'){
+    GV=new Map();GE=[];drawGraph();SFX.clr();setStatus('graph','Graph cleared.','');addHist('graph','CLEAR','Emptied');toast('Cleared','info');
+  } else if(op==='reset'){
+    GV=new Map();GE=[];if(vEl)vEl.value='';if(fEl)fEl.value='';if(tEl)tEl.value='';
+    drawGraph();SFX.clr();setStatus('graph','Graph reset.','');addHist('graph','RESET','Reset');toast('Reset','info');
+  }
+  if(vEl)vEl.value='';if(fEl)fEl.value='';if(tEl)tEl.value='';
+}
+
+/* ── DS init callbacks (called after DOM injection) ── */
+const DS_INIT={
+  array:()=>{ ARR=[];renderArr(); document.getElementById('av')?.addEventListener('keydown',e=>{if(e.key==='Enter')aOp('push');}); },
+  stack:()=>{ STK=[];renderStk(); document.getElementById('sv')?.addEventListener('keydown',e=>{if(e.key==='Enter')sOp('push');}); },
+  queue:()=>{ QUE=[];renderQue(); document.getElementById('qv')?.addEventListener('keydown',e=>{if(e.key==='Enter')qOp('enqueue');}); },
+  ll:   ()=>{ LH=null;LS=0;renderLL(); document.getElementById('lv')?.addEventListener('keydown',e=>{if(e.key==='Enter')lOp('tail');}); },
+  tree: ()=>{ TR=null;drawTree(); document.getElementById('tv')?.addEventListener('keydown',e=>{if(e.key==='Enter')tOp('insert');}); },
+  graph:()=>{ GV=new Map();GE=[];drawGraph();setupGraphDrag(); document.getElementById('gv')?.addEventListener('keydown',e=>{if(e.key==='Enter')grOp('addV');}); },
+};
+
+/* ════════════════════════════════════════
+   PARTICLE CANVAS
+════════════════════════════════════════ */
+(function(){
+  const cv=document.getElementById('pcanvas');
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=cv.width=cv.offsetWidth;H=cv.height=cv.offsetHeight;}
+  class P{
+    constructor(){this.reset();}
+    reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=Math.random()*2+.5;this.vx=(Math.random()-.5)*.35;this.vy=(Math.random()-.5)*.35;this.a=Math.random()*.35+.1;this.col=['#3b82f6','#8b5cf6','#14b8a6'][Math.floor(Math.random()*3)];}
+    update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset();}
+    draw(){ctx.save();ctx.globalAlpha=this.a;ctx.fillStyle=this.col;ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();ctx.restore();}
+  }
+  function init(){resize();pts=Array.from({length:100},()=>new P());}
+  function lines(){
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<95){ctx.save();ctx.globalAlpha=(1-d/95)*.1;ctx.strokeStyle='#3b82f6';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();ctx.restore();}
+    }
+  }
+  function loop(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw();});lines();requestAnimationFrame(loop);}
+  window.addEventListener('resize',resize);
+  init();loop();
+})();
+
+/* ════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+════════════════════════════════════════ */
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;
+  if(e.key==='T'||e.key==='t')toggleTheme();
+  if(e.key==='S'||e.key==='s')toggleSound();
+  if(e.key==='Escape'||e.key==='h'||e.key==='H')goHome();
+});
+
+/* ════════════════════════════════════════
+   SCROLL-REVEAL on category pages
+════════════════════════════════════════ */
+const revStyle=document.createElement('style');
+revStyle.textContent='.rev{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}.rev.vis{opacity:1;transform:none}';
+document.head.appendChild(revStyle);
+const rio=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');rio.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.cat-card,.ds-item-card,.def-card').forEach(el=>{el.classList.add('rev');rio.observe(el);});
+
+/* resize handler for SVGs */
+window.addEventListener('resize',()=>{drawTree();drawGraph();});
+</script>
+</body>
+</html>
